@@ -34,7 +34,7 @@ export function Navbar({ onMenuClick }: NavbarProps) {
         </div>
 
         <div className="flex items-center">
-          <UserButton afterSignOutUrl="/">
+          <UserButton>
             {profileUrl && (
               <UserButton.MenuItems>
                 <UserButton.Link label="Profile" labelIcon={<ProfileIcon />} href={profileUrl} />

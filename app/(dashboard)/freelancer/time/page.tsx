@@ -89,11 +89,6 @@ export default async function TimePage() {
                   </div>
                 </div>
               </CardHeader>
-              {entry.description && (
-                <CardContent>
-                  <p className="text-sm text-muted-foreground">{entry.description}</p>
-                </CardContent>
-              )}
             </Card>
           ))}
         </div>
