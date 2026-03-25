@@ -1,13 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { UserButton, useUser } from "@clerk/nextjs";
+import { UserButton } from "@clerk/nextjs";
 import { usePathname } from "next/navigation";
-import { cn } from "@/lib/utils";
-import { Users, GitPullRequest, FolderKanban, CheckSquare, Clock } from "lucide-react";
+import { Menu } from "lucide-react";
 
-export function Navbar() {
-  const { user } = useUser();
+interface NavbarProps {
+  onMenuClick: () => void;
+}
+
+export function Navbar({ onMenuClick }: NavbarProps) {
   const pathname = usePathname();
 
   const isClient = pathname.startsWith("/client");
@@ -16,43 +18,20 @@ export function Navbar() {
   const dashboardUrl = isClient ? "/client/dashboard" : "/freelancer/dashboard";
   const profileUrl = isFreelancer ? "/freelancer/profile" : undefined;
 
-  const clientLinks = [
-    { href: "/marketplace", label: "Marketplace", icon: Users },
-  ];
-
-  const freelancerLinks = [
-    { href: "/freelancer/pipeline", label: "Pipeline", icon: GitPullRequest },
-    { href: "/freelancer/projects", label: "Projects", icon: FolderKanban },
-    { href: "/freelancer/tasks", label: "Tasks", icon: CheckSquare },
-    { href: "/freelancer/time", label: "Time", icon: Clock },
-  ];
-
-  const links = isClient ? clientLinks : isFreelancer ? freelancerLinks : [];
-
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container mx-auto flex h-14 items-center justify-between px-6">
-        <Link href={dashboardUrl} className="mr-6 flex items-center space-x-2">
-          <span className="text-xl font-bold text-primary">Freelancly</span>
-        </Link>
-
-        {links.length > 0 && (
-          <nav className="flex items-center space-x-6 text-sm font-medium">
-            {links.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={cn(
-                  "flex items-center gap-2 transition-colors hover:text-foreground/80",
-                  pathname === link.href ? "text-foreground" : "text-foreground/60"
-                )}
-              >
-                <link.icon className="h-4 w-4" />
-                {link.label}
-              </Link>
-            ))}
-          </nav>
-        )}
+      <div className="flex h-14 items-center justify-between px-6">
+        <div className="flex items-center gap-4">
+          <button
+            onClick={onMenuClick}
+            className="rounded-md p-2 hover:bg-accent md:hidden"
+          >
+            <Menu className="h-5 w-5" />
+          </button>
+          <Link href={dashboardUrl} className="flex items-center space-x-2">
+            <span className="text-xl font-bold text-primary">Freelancly</span>
+          </Link>
+        </div>
 
         <div className="flex items-center">
           <UserButton afterSignOutUrl="/">
