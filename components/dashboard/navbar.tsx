@@ -4,7 +4,7 @@ import Link from "next/link";
 import { UserButton, useUser } from "@clerk/nextjs";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { Users } from "lucide-react";
+import { Users, GitPullRequest, FolderKanban, CheckSquare, Clock } from "lucide-react";
 
 export function Navbar() {
   const { user } = useUser();
@@ -20,7 +20,14 @@ export function Navbar() {
     { href: "/marketplace", label: "Marketplace", icon: Users },
   ];
 
-  const links = isClient ? clientLinks : [];
+  const freelancerLinks = [
+    { href: "/freelancer/pipeline", label: "Pipeline", icon: GitPullRequest },
+    { href: "/freelancer/projects", label: "Projects", icon: FolderKanban },
+    { href: "/freelancer/tasks", label: "Tasks", icon: CheckSquare },
+    { href: "/freelancer/time", label: "Time", icon: Clock },
+  ];
+
+  const links = isClient ? clientLinks : isFreelancer ? freelancerLinks : [];
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
