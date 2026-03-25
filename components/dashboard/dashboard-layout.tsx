@@ -16,7 +16,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       <Navbar onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       <main className="md:pl-64">
-        <div className="container mx-auto px-6 py-6">{children}</div>
+        <div className="container mx-auto px-4 py-6 md:px-6">{children}</div>
       </main>
     </div>
   );
