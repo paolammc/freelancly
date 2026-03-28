@@ -3,8 +3,9 @@ import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/dashboard/progress";
-import { FolderKanban } from "lucide-react";
+import { FolderKanban, Plus } from "lucide-react";
 import Link from "next/link";
 
 export default async function ProjectsPage() {
@@ -38,21 +39,37 @@ export default async function ProjectsPage() {
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Projects</h1>
-        <p className="text-muted-foreground">
-          Manage your active and completed projects
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Projects</h1>
+          <p className="text-muted-foreground">
+            Manage your active and completed projects
+          </p>
+        </div>
+        <Link href="/freelancer/projects/new">
+          <Button className="gap-2">
+            <Plus className="h-4 w-4" />
+            New Project
+          </Button>
+        </Link>
       </div>
 
       {projects.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-10">
-            <FolderKanban className="h-12 w-12 text-muted-foreground mb-4" />
-            <p className="text-muted-foreground">No projects yet</p>
-            <p className="text-sm text-muted-foreground">
-              Projects will appear here once clients hire you
+        <Card className="border-dashed border-2">
+          <CardContent className="flex flex-col items-center justify-center py-12">
+            <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center mb-4">
+              <FolderKanban className="h-8 w-8 text-muted-foreground" />
+            </div>
+            <h3 className="font-semibold text-lg mb-1">No projects yet</h3>
+            <p className="text-muted-foreground text-center max-w-sm mb-6">
+              Create your first project to start organizing your work and tracking tasks.
             </p>
+            <Link href="/freelancer/projects/new">
+              <Button className="gap-2">
+                <Plus className="h-4 w-4" />
+                Create Your First Project
+              </Button>
+            </Link>
           </CardContent>
         </Card>
       ) : (

@@ -8,9 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
-import { X } from "lucide-react";
+import { SkillsInput } from "@/components/ui/skills-input";
 
 interface ProfileData {
   fullName: string;
@@ -28,7 +27,6 @@ export default function FreelancerProfilePage() {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
-  const [skillInput, setSkillInput] = useState("");
   const [profile, setProfile] = useState<ProfileData>({
     fullName: "",
     title: "",
@@ -67,28 +65,19 @@ export default function FreelancerProfilePage() {
     fetchProfile();
   }, []);
 
-  function addSkill(e: React.KeyboardEvent<HTMLInputElement>) {
-    if (e.key === "Enter" && skillInput.trim()) {
-      e.preventDefault();
-      if (!profile.skills.includes(skillInput.trim())) {
-        setProfile((prev) => ({
-          ...prev,
-          skills: [...prev.skills, skillInput.trim()],
-        }));
-      }
-      setSkillInput("");
-    }
-  }
-
-  function removeSkill(skill: string) {
-    setProfile((prev) => ({
-      ...prev,
-      skills: prev.skills.filter((s) => s !== skill),
-    }));
-  }
-
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+
+    // Validate skills
+    if (profile.skills.length === 0) {
+      toast({
+        title: "Skills required",
+        description: "Please add at least one skill to your profile.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -184,30 +173,12 @@ export default function FreelancerProfilePage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="skills">Skills</Label>
-              <Input
-                id="skills"
-                value={skillInput}
-                onChange={(e) => setSkillInput(e.target.value)}
-                onKeyDown={addSkill}
-                placeholder="Type a skill and press Enter"
+              <Label htmlFor="skills">Skills *</Label>
+              <SkillsInput
+                value={profile.skills}
+                onChange={(skills) => setProfile((prev) => ({ ...prev, skills }))}
+                placeholder="Search for skills (e.g., React, Figma, Python)"
               />
-              {profile.skills.length > 0 && (
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {profile.skills.map((skill) => (
-                    <Badge key={skill} variant="secondary" className="gap-1">
-                      {skill}
-                      <button
-                        type="button"
-                        onClick={() => removeSkill(skill)}
-                        className="ml-1 hover:text-destructive"
-                      >
-                        <X className="h-3 w-3" />
-                      </button>
-                    </Badge>
-                  ))}
-                </div>
-              )}
             </div>
 
             <div className="space-y-2">
@@ -244,7 +215,10 @@ export default function FreelancerProfilePage() {
               >
                 Cancel
               </Button>
-              <Button type="submit" disabled={isLoading}>
+              <Button
+                type="submit"
+                disabled={isLoading || profile.skills.length === 0}
+              >
                 {isLoading ? "Saving..." : "Save Profile"}
               </Button>
             </div>

@@ -76,12 +76,38 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    if (user.role !== "client") {
-      return NextResponse.json({ error: "Only clients can create projects" }, { status: 403 });
-    }
-
     const body = await req.json();
     const { freelancerId, title, description, budget, deadline, meetingUrl } = body;
+
+    // Freelancers can create their own projects (self-assigned)
+    if (user.role === "freelancer") {
+      const project = await db.project.create({
+        data: {
+          clientId: user.id, // Freelancer is also the "client" for self-projects
+          freelancerId: user.id,
+          title,
+          description,
+          budget: budget || null,
+          deadline: deadline ? new Date(deadline) : null,
+          meetingUrl: meetingUrl || null,
+        },
+        include: {
+          client: true,
+          freelancer: {
+            include: {
+              freelancerProfile: true,
+            },
+          },
+        },
+      });
+
+      return NextResponse.json(project);
+    }
+
+    // Clients create projects with freelancers
+    if (user.role !== "client") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+    }
 
     const freelancer = await db.user.findUnique({
       where: { id: freelancerId },

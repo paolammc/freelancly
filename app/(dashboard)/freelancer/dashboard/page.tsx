@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/dashboard/progress";
 import { formatDuration } from "@/lib/utils";
-import { FolderOpen, Clock, CheckCircle, ListTodo, ArrowRight, Sparkles } from "lucide-react";
+import { FolderOpen, Clock, CheckCircle, ListTodo, ArrowRight, Sparkles, Plus } from "lucide-react";
 
 export default async function FreelancerDashboardPage() {
   const { userId: clerkUserId } = await auth();
@@ -157,14 +157,22 @@ export default async function FreelancerDashboardPage() {
             <h2 className="text-xl font-semibold">Your Projects</h2>
             <p className="text-sm text-muted-foreground">Manage and track your active work</p>
           </div>
-          {projects.length > 0 && (
-            <Link href="/freelancer/projects">
-              <Button variant="ghost" size="sm" className="text-primary">
-                View all
-                <ArrowRight className="ml-1 h-4 w-4" />
+          <div className="flex items-center gap-2">
+            <Link href="/freelancer/projects/new">
+              <Button size="sm" className="gap-2">
+                <Plus className="h-4 w-4" />
+                New Project
               </Button>
             </Link>
-          )}
+            {projects.length > 0 && (
+              <Link href="/freelancer/projects">
+                <Button variant="ghost" size="sm" className="text-primary">
+                  View all
+                  <ArrowRight className="ml-1 h-4 w-4" />
+                </Button>
+              </Link>
+            )}
+          </div>
         </div>
 
         {projects.length === 0 ? (
@@ -174,15 +182,23 @@ export default async function FreelancerDashboardPage() {
                 <FolderOpen className="h-8 w-8 text-primary" />
               </div>
               <h3 className="font-semibold text-lg mb-1">No projects yet</h3>
-              <p className="text-muted-foreground text-center max-w-sm">
-                Clients will discover you in the marketplace. Make sure your profile is complete!
+              <p className="text-muted-foreground text-center max-w-sm mb-6">
+                Create your first project to start organizing your work, or wait for clients to discover you in the marketplace.
               </p>
-              <Link href="/freelancer/profile" className="mt-4">
-                <Button variant="outline">
-                  Complete Profile
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              </Link>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Link href="/freelancer/projects/new">
+                  <Button className="gap-2">
+                    <Plus className="h-4 w-4" />
+                    Create Project
+                  </Button>
+                </Link>
+                <Link href="/freelancer/profile">
+                  <Button variant="outline">
+                    Edit Profile
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </Link>
+              </div>
             </CardContent>
           </Card>
         ) : (
