@@ -271,8 +271,10 @@ export default async function HomePage() {
         </section>
 
         {/* ========================================
-            TESTIMONIALS SECTION - Desktop focused
+            TESTIMONIALS SECTION - Hidden until we have real testimonials
+            Uncomment when ready to display
             ======================================== */}
+        {/*
         <section className="py-12 md:py-20">
           <div className="text-center mb-12">
             <h2 className="text-2xl md:text-3xl font-bold mb-3">Loved by teams worldwide</h2>
@@ -300,6 +302,7 @@ export default async function HomePage() {
             />
           </div>
         </section>
+        */}
 
         {/* ========================================
             CTA BANNER
