@@ -11,6 +11,8 @@ import { ArrowLeft, Calendar, DollarSign, Video } from "lucide-react";
 import { TaskList } from "@/components/projects/task-list";
 import { GenerateTasksButton } from "@/components/projects/generate-tasks-button";
 import { AddTaskForm } from "@/components/projects/add-task-form";
+import { TaskBoard } from "@/components/tasks/task-board";
+import { AIToolsPanel } from "@/components/projects/ai-tools-panel";
 
 export default async function ProjectDetailPage({
   params,
@@ -52,8 +54,42 @@ export default async function ProjectDetailPage({
               userId: true,
             },
           },
+          subtasks: {
+            select: {
+              id: true,
+              title: true,
+              status: true,
+            },
+          },
+          comments: {
+            include: {
+              user: {
+                select: {
+                  email: true,
+                  freelancerProfile: {
+                    select: {
+                      fullName: true,
+                      avatarUrl: true,
+                    },
+                  },
+                },
+              },
+            },
+            orderBy: { createdAt: "asc" },
+          },
         },
-        orderBy: { createdAt: "asc" },
+        where: {
+          parentTaskId: null, // Only fetch top-level tasks
+        },
+        orderBy: { order: "asc" },
+      },
+      roadmaps: {
+        orderBy: { createdAt: "desc" },
+        take: 1,
+      },
+      prds: {
+        orderBy: { createdAt: "desc" },
+        take: 1,
       },
     },
   });
@@ -217,13 +253,42 @@ export default async function ProjectDetailPage({
         </Card>
       </div>
 
-      <Tabs defaultValue="tasks" className="space-y-6">
+      <Tabs defaultValue="board" className="space-y-6">
         <TabsList>
+          <TabsTrigger value="board">Board</TabsTrigger>
           <TabsTrigger value="tasks">
-            Tasks ({totalTasks})
+            List ({totalTasks})
           </TabsTrigger>
+          <TabsTrigger value="ai-tools">AI Tools</TabsTrigger>
           <TabsTrigger value="overview">Overview</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="board" className="space-y-6">
+          <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
+            <div className="flex items-center gap-4 text-sm text-muted-foreground">
+              <span>{todoTasks} Todo</span>
+              <span>{inProgressTasks} In Progress</span>
+              <span>{completedTasks} Done</span>
+            </div>
+            <div className="flex gap-2">
+              <AddTaskForm projectId={project.id} />
+              <GenerateTasksButton projectId={project.id} hasExistingTasks={totalTasks > 0} />
+            </div>
+          </div>
+
+          <TaskBoard
+            tasks={project.tasks.map((task) => ({
+              ...task,
+              dueDate: task.dueDate?.toISOString() || null,
+              comments: task.comments.map((c) => ({
+                ...c,
+                createdAt: c.createdAt.toISOString(),
+              })),
+            }))}
+            projectId={project.id}
+            editable={isFreelancer}
+          />
+        </TabsContent>
 
         <TabsContent value="tasks" className="space-y-6">
           <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
@@ -243,6 +308,38 @@ export default async function ProjectDetailPage({
             isFreelancer={isFreelancer}
             currentUserId={currentUser.id}
             activeTimerTaskId={activeTimerTaskId}
+          />
+        </TabsContent>
+
+        <TabsContent value="ai-tools" className="space-y-6">
+          <AIToolsPanel
+            projectId={project.id}
+            initialRoadmap={
+              project.roadmaps[0]
+                ? {
+                    id: project.roadmaps[0].id,
+                    title: project.roadmaps[0].title,
+                    description: project.roadmaps[0].description,
+                    phases: project.roadmaps[0].phases as any,
+                    createdAt: project.roadmaps[0].createdAt.toISOString(),
+                  }
+                : null
+            }
+            initialPRD={
+              project.prds[0]
+                ? {
+                    id: project.prds[0].id,
+                    title: project.prds[0].title,
+                    problem: project.prds[0].problem,
+                    goals: project.prds[0].goals,
+                    features: project.prds[0].features as any,
+                    userFlows: project.prds[0].userFlows as any,
+                    metrics: project.prds[0].metrics as any,
+                    content: project.prds[0].content,
+                    createdAt: project.prds[0].createdAt.toISOString(),
+                  }
+                : null
+            }
           />
         </TabsContent>
 

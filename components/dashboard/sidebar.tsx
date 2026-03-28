@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { GitPullRequest, FolderKanban, CheckSquare, Clock, X, LayoutDashboard, Store } from "lucide-react";
+import { GitPullRequest, FolderKanban, CheckSquare, Clock, X, LayoutDashboard, Store, Receipt } from "lucide-react";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -16,6 +16,7 @@ const freelancerLinks = [
   { href: "/freelancer/projects", label: "Projects", icon: FolderKanban },
   { href: "/freelancer/tasks", label: "Tasks", icon: CheckSquare },
   { href: "/freelancer/time", label: "Time", icon: Clock },
+  { href: "/freelancer/billing", label: "Billing", icon: Receipt },
 ];
 
 const clientLinks = [

@@ -19,7 +19,17 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { projectId, title, description, source = "manual" } = body;
+    const {
+      projectId,
+      title,
+      description,
+      source = "manual",
+      priority,
+      tags,
+      estimatedSeconds,
+      dueDate,
+      parentTaskId,
+    } = body;
 
     const project = await db.project.findUnique({
       where: { id: projectId },
@@ -41,6 +51,11 @@ export async function POST(req: Request) {
         description: description || null,
         source,
         assigneeUserId: project.freelancerId,
+        priority: priority || "medium",
+        tags: tags || [],
+        estimatedSeconds: estimatedSeconds || null,
+        dueDate: dueDate ? new Date(dueDate) : null,
+        parentTaskId: parentTaskId || null,
       },
     });
 

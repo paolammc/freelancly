@@ -2,7 +2,69 @@ import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 
-export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { userId: clerkUserId } = await auth();
+
+    if (!clerkUserId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const user = await db.user.findUnique({
+      where: { clerkUserId },
+    });
+
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    const { id } = await params;
+
+    const task = await db.task.findUnique({
+      where: { id },
+      include: {
+        project: true,
+        comments: {
+          include: {
+            user: {
+              select: {
+                email: true,
+                freelancerProfile: {
+                  select: {
+                    fullName: true,
+                    avatarUrl: true,
+                  },
+                },
+              },
+            },
+          },
+          orderBy: { createdAt: "asc" },
+        },
+      },
+    });
+
+    if (!task) {
+      return NextResponse.json({ error: "Task not found" }, { status: 404 });
+    }
+
+    if (task.project.clientId !== user.id && task.project.freelancerId !== user.id) {
+      return NextResponse.json({ error: "Access denied" }, { status: 403 });
+    }
+
+    return NextResponse.json(task.comments);
+  } catch (error) {
+    console.error("Error fetching comments:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}
+
+export async function POST(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
     const { userId: clerkUserId } = await auth();
 
@@ -31,76 +93,41 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       return NextResponse.json({ error: "Task not found" }, { status: 404 });
     }
 
-    // Check if user has access to this task's project
     if (task.project.clientId !== user.id && task.project.freelancerId !== user.id) {
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 
     const body = await req.json();
-    const { title, description, status, priority, tags, estimatedSeconds, dueDate, order } = body;
+    const { content } = body;
 
-    const updatedTask = await db.task.update({
-      where: { id },
+    if (!content) {
+      return NextResponse.json({ error: "Content is required" }, { status: 400 });
+    }
+
+    const comment = await db.comment.create({
       data: {
-        ...(title && { title }),
-        ...(description !== undefined && { description }),
-        ...(status && { status }),
-        ...(priority && { priority }),
-        ...(tags !== undefined && { tags }),
-        ...(estimatedSeconds !== undefined && { estimatedSeconds }),
-        ...(dueDate !== undefined && { dueDate: dueDate ? new Date(dueDate) : null }),
-        ...(order !== undefined && { order }),
+        taskId: id,
+        userId: user.id,
+        content,
       },
-    });
-
-    return NextResponse.json(updatedTask);
-  } catch (error) {
-    console.error("Error updating task:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-  }
-}
-
-export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
-  try {
-    const { userId: clerkUserId } = await auth();
-
-    if (!clerkUserId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const user = await db.user.findUnique({
-      where: { clerkUserId },
-    });
-
-    if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
-    }
-
-    const { id } = await params;
-
-    const task = await db.task.findUnique({
-      where: { id },
       include: {
-        project: true,
+        user: {
+          select: {
+            email: true,
+            freelancerProfile: {
+              select: {
+                fullName: true,
+                avatarUrl: true,
+              },
+            },
+          },
+        },
       },
     });
 
-    if (!task) {
-      return NextResponse.json({ error: "Task not found" }, { status: 404 });
-    }
-
-    // Check if user has access to this task's project
-    if (task.project.clientId !== user.id && task.project.freelancerId !== user.id) {
-      return NextResponse.json({ error: "Access denied" }, { status: 403 });
-    }
-
-    await db.task.delete({
-      where: { id },
-    });
-
-    return NextResponse.json({ success: true });
+    return NextResponse.json(comment);
   } catch (error) {
-    console.error("Error deleting task:", error);
+    console.error("Error creating comment:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

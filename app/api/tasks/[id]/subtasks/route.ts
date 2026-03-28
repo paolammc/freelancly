@@ -2,7 +2,10 @@ import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 
-export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
     const { userId: clerkUserId } = await auth();
 
@@ -24,6 +27,9 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       where: { id },
       include: {
         project: true,
+        subtasks: {
+          orderBy: { order: "asc" },
+        },
       },
     });
 
@@ -31,36 +37,21 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       return NextResponse.json({ error: "Task not found" }, { status: 404 });
     }
 
-    // Check if user has access to this task's project
     if (task.project.clientId !== user.id && task.project.freelancerId !== user.id) {
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 
-    const body = await req.json();
-    const { title, description, status, priority, tags, estimatedSeconds, dueDate, order } = body;
-
-    const updatedTask = await db.task.update({
-      where: { id },
-      data: {
-        ...(title && { title }),
-        ...(description !== undefined && { description }),
-        ...(status && { status }),
-        ...(priority && { priority }),
-        ...(tags !== undefined && { tags }),
-        ...(estimatedSeconds !== undefined && { estimatedSeconds }),
-        ...(dueDate !== undefined && { dueDate: dueDate ? new Date(dueDate) : null }),
-        ...(order !== undefined && { order }),
-      },
-    });
-
-    return NextResponse.json(updatedTask);
+    return NextResponse.json(task.subtasks);
   } catch (error) {
-    console.error("Error updating task:", error);
+    console.error("Error fetching subtasks:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
 
-export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function POST(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
     const { userId: clerkUserId } = await auth();
 
@@ -78,29 +69,51 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
 
     const { id } = await params;
 
-    const task = await db.task.findUnique({
+    const parentTask = await db.task.findUnique({
       where: { id },
       include: {
         project: true,
+        subtasks: true,
       },
     });
 
-    if (!task) {
+    if (!parentTask) {
       return NextResponse.json({ error: "Task not found" }, { status: 404 });
     }
 
-    // Check if user has access to this task's project
-    if (task.project.clientId !== user.id && task.project.freelancerId !== user.id) {
+    if (
+      parentTask.project.clientId !== user.id &&
+      parentTask.project.freelancerId !== user.id
+    ) {
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 
-    await db.task.delete({
-      where: { id },
+    const body = await req.json();
+    const { title, description } = body;
+
+    if (!title) {
+      return NextResponse.json({ error: "Title is required" }, { status: 400 });
+    }
+
+    const maxOrder = parentTask.subtasks.reduce(
+      (max, s) => Math.max(max, s.order),
+      0
+    );
+
+    const subtask = await db.task.create({
+      data: {
+        projectId: parentTask.projectId,
+        parentTaskId: id,
+        title,
+        description: description || null,
+        order: maxOrder + 1,
+        assigneeUserId: parentTask.assigneeUserId,
+      },
     });
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json(subtask);
   } catch (error) {
-    console.error("Error deleting task:", error);
+    console.error("Error creating subtask:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

@@ -29,6 +29,29 @@ enum ProjectStatus {
   paused
 }
 
+enum Priority {
+  low
+  medium
+  high
+  urgent
+}
+
+enum EstimateStatus {
+  draft
+  sent
+  approved
+  rejected
+  expired
+}
+
+enum PaymentStatus {
+  pending
+  paid
+  overdue
+  refunded
+  cancelled
+}
+
 model User {
   id          String   @id @default(uuid())
   clerkUserId String   @unique
@@ -42,6 +65,10 @@ model User {
   freelancerProjects Project[]   @relation("FreelancerProjects")
   assignedTasks      Task[]
   timeEntries        TimeEntry[]
+  comments           Comment[]
+  estimates          Estimate[]  @relation("FreelancerEstimates")
+  clientEstimates    Estimate[]  @relation("ClientEstimates")
+  payments           Payment[]
 }
 
 model FreelancerProfile {
@@ -74,23 +101,35 @@ model Project {
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
 
-  tasks Task[]
+  tasks     Task[]
+  estimates Estimate[]
+  roadmaps  Roadmap[]
+  prds      PRD[]
 }
 
 model Task {
-  id             String     @id @default(uuid())
-  projectId      String
-  project        Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  title          String
-  description    String?
-  status         TaskStatus @default(todo)
-  assigneeUserId String?
-  assignee       User?      @relation(fields: [assigneeUserId], references: [id], onDelete: SetNull)
-  source         TaskSource @default(manual)
-  createdAt      DateTime   @default(now())
-  updatedAt      DateTime   @updatedAt
+  id               String     @id @default(uuid())
+  projectId        String
+  project          Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  title            String
+  description      String?
+  status           TaskStatus @default(todo)
+  assigneeUserId   String?
+  assignee         User?      @relation(fields: [assigneeUserId], references: [id], onDelete: SetNull)
+  source           TaskSource @default(manual)
+  priority         Priority   @default(medium)
+  tags             String[]
+  estimatedSeconds Int?
+  dueDate          DateTime?
+  parentTaskId     String?
+  parentTask       Task?      @relation("TaskSubtasks", fields: [parentTaskId], references: [id], onDelete: SetNull)
+  subtasks         Task[]     @relation("TaskSubtasks")
+  order            Int        @default(0)
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
 
   timeEntries TimeEntry[]
+  comments    Comment[]
 }
 
 model TimeEntry {
@@ -105,4 +144,106 @@ model TimeEntry {
   isActive        Boolean   @default(true)
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
+}
+
+model Comment {
+  id        String   @id @default(uuid())
+  taskId    String
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Estimate {
+  id           String         @id @default(uuid())
+  projectId    String
+  project      Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  freelancerId String
+  freelancer   User           @relation("FreelancerEstimates", fields: [freelancerId], references: [id], onDelete: Cascade)
+  clientId     String
+  client       User           @relation("ClientEstimates", fields: [clientId], references: [id], onDelete: Cascade)
+  title        String
+  description  String?
+  status       EstimateStatus @default(draft)
+  validUntil   DateTime?
+  approvalToken String?       @unique
+  sentAt       DateTime?
+  approvedAt   DateTime?
+  totalAmount  Decimal        @db.Decimal(10, 2)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  items    EstimateItem[]
+  payments Payment[]
+}
+
+model EstimateItem {
+  id          String   @id @default(uuid())
+  estimateId  String
+  estimate    Estimate @relation(fields: [estimateId], references: [id], onDelete: Cascade)
+  description String
+  quantity    Decimal  @db.Decimal(10, 2)
+  unitPrice   Decimal  @db.Decimal(10, 2)
+  amount      Decimal  @db.Decimal(10, 2)
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Payment {
+  id         String        @id @default(uuid())
+  estimateId String
+  estimate   Estimate      @relation(fields: [estimateId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amount     Decimal       @db.Decimal(10, 2)
+  status     PaymentStatus @default(pending)
+  method     String?
+  paidAt     DateTime?
+  dueDate    DateTime?
+  notes      String?
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+
+  receipt Receipt?
+}
+
+model Receipt {
+  id          String   @id @default(uuid())
+  paymentId   String   @unique
+  payment     Payment  @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  receiptNumber String @unique
+  issuedAt    DateTime @default(now())
+  pdfUrl      String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Roadmap {
+  id          String   @id @default(uuid())
+  projectId   String
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  title       String
+  description String?
+  phases      Json     // Array of phases with milestones, timelines
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model PRD {
+  id          String   @id @default(uuid())
+  projectId   String
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  title       String
+  problem     String?
+  goals       String?
+  features    Json?    // Array of feature objects
+  userFlows   Json?    // Array of user flow objects
+  metrics     Json?    // Success metrics
+  content     String?  // Full markdown content
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
