@@ -152,15 +152,20 @@ export function QuickTaskModal({ projects, defaultProjectId }: QuickTaskModalPro
 
   return (
     <>
-      {/* Floating Action Button */}
-      <div className="fixed bottom-6 right-6 z-40">
+      {/* Floating Action Button with Label */}
+      <div className="fixed bottom-6 right-6 z-40 flex flex-col items-end gap-2">
+        {/* Tooltip/Label - visible on hover */}
+        <div className="hidden md:block opacity-0 group-hover:opacity-100 transition-opacity bg-foreground text-background text-xs font-medium px-2 py-1 rounded shadow-lg pointer-events-none">
+          Quick Task (⌘K)
+        </div>
         <Button
           onClick={() => setOpen(true)}
           size="lg"
-          className="h-14 w-14 rounded-full shadow-lg hover:shadow-xl transition-shadow"
+          className="group h-12 md:h-14 gap-2 rounded-full shadow-lg hover:shadow-xl transition-all hover:pr-5"
+          title="Quick Task (⌘K)"
         >
-          <Plus className="h-6 w-6" />
-          <span className="sr-only">Quick Task (⌘K)</span>
+          <Plus className="h-5 w-5 md:h-6 md:w-6" />
+          <span className="hidden md:group-hover:inline text-sm font-medium">Add Task</span>
         </Button>
       </div>
 

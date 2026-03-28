@@ -84,15 +84,6 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           })}
         </nav>
 
-        {/* Bottom section */}
-        <div className="absolute bottom-6 left-0 right-0 px-4">
-          <div className="rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 p-4 border border-primary/10">
-            <p className="text-xs font-medium text-primary mb-1">Pro Tip</p>
-            <p className="text-xs text-muted-foreground">
-              Keep your profile updated to attract more clients!
-            </p>
-          </div>
-        </div>
       </aside>
     </>
   );
