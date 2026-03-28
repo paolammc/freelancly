@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { GitPullRequest, FolderKanban, CheckSquare, Clock, X } from "lucide-react";
+import { GitPullRequest, FolderKanban, CheckSquare, Clock, X, LayoutDashboard, Store } from "lucide-react";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -11,6 +11,7 @@ interface SidebarProps {
 }
 
 const freelancerLinks = [
+  { href: "/freelancer/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/freelancer/pipeline", label: "Pipeline", icon: GitPullRequest },
   { href: "/freelancer/projects", label: "Projects", icon: FolderKanban },
   { href: "/freelancer/tasks", label: "Tasks", icon: CheckSquare },
@@ -18,8 +19,8 @@ const freelancerLinks = [
 ];
 
 const clientLinks = [
-  { href: "/client/dashboard", label: "Dashboard", icon: FolderKanban },
-  { href: "/marketplace", label: "Marketplace", icon: GitPullRequest },
+  { href: "/client/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/marketplace", label: "Marketplace", icon: Store },
 ];
 
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
@@ -34,7 +35,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       {/* Mobile overlay */}
       {isOpen && (
         <div
-          className="fixed inset-0 z-40 bg-background/80 backdrop-blur-sm md:hidden"
+          className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm md:hidden"
           onClick={onClose}
         />
       )}
@@ -42,7 +43,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       {/* Sidebar */}
       <aside
         className={cn(
-          "fixed left-0 top-14 z-50 h-[calc(100vh-3.5rem)] w-64 border-r bg-background transition-transform duration-300 ease-in-out md:translate-x-0",
+          "fixed left-0 top-14 z-50 h-[calc(100vh-3.5rem)] w-64 border-r bg-card/50 backdrop-blur-xl transition-transform duration-300 ease-in-out md:translate-x-0",
           isOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
@@ -50,33 +51,47 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         <div className="flex justify-end p-4 md:hidden">
           <button
             onClick={onClose}
-            className="rounded-md p-2 hover:bg-accent"
+            className="rounded-lg p-2 hover:bg-accent transition-colors"
           >
             <X className="h-5 w-5" />
           </button>
         </div>
 
         <nav className="space-y-1 px-3 py-4 md:py-6">
+          <p className="px-3 mb-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+            Menu
+          </p>
           {links.map((link) => {
-            const isActive = pathname === link.href;
+            const isActive = pathname === link.href ||
+              (link.href !== "/freelancer/dashboard" && link.href !== "/client/dashboard" && pathname.startsWith(link.href));
             return (
               <Link
                 key={link.href}
                 href={link.href}
                 onClick={onClose}
                 className={cn(
-                  "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                  "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200",
                   isActive
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:bg-accent hover:text-foreground"
+                    ? "bg-primary text-primary-foreground shadow-md shadow-primary/25"
+                    : "text-muted-foreground hover:bg-accent hover:text-foreground hover:translate-x-1"
                 )}
               >
-                <link.icon className="h-5 w-5" />
+                <link.icon className={cn("h-5 w-5", isActive && "animate-pulse")} />
                 {link.label}
               </Link>
             );
           })}
         </nav>
+
+        {/* Bottom section */}
+        <div className="absolute bottom-6 left-0 right-0 px-4">
+          <div className="rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 p-4 border border-primary/10">
+            <p className="text-xs font-medium text-primary mb-1">Pro Tip</p>
+            <p className="text-xs text-muted-foreground">
+              Keep your profile updated to attract more clients!
+            </p>
+          </div>
+        </div>
       </aside>
     </>
   );

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { UserButton } from "@clerk/nextjs";
 import { usePathname } from "next/navigation";
-import { Menu } from "lucide-react";
+import { Menu, Zap } from "lucide-react";
 
 interface NavbarProps {
   onMenuClick: () => void;
@@ -19,22 +19,33 @@ export function Navbar({ onMenuClick }: NavbarProps) {
   const profileUrl = isFreelancer ? "/freelancer/profile" : undefined;
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="flex h-14 items-center justify-between px-6">
-        <div className="flex items-center gap-4">
+    <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60">
+      <div className="flex h-14 items-center justify-between px-4 md:px-6">
+        <div className="flex items-center gap-3">
           <button
             onClick={onMenuClick}
-            className="rounded-md p-2 hover:bg-accent md:hidden"
+            className="rounded-lg p-2 hover:bg-accent transition-colors md:hidden"
           >
             <Menu className="h-5 w-5" />
           </button>
-          <Link href={dashboardUrl} className="flex items-center space-x-2">
-            <span className="text-xl font-bold text-primary">Freelancly</span>
+          <Link href={dashboardUrl} className="flex items-center gap-2 group">
+            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-md shadow-primary/25 group-hover:shadow-lg group-hover:shadow-primary/30 transition-shadow">
+              <Zap className="h-4 w-4 text-primary-foreground" />
+            </div>
+            <span className="text-xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+              Freelancly
+            </span>
           </Link>
         </div>
 
-        <div className="flex items-center">
-          <UserButton>
+        <div className="flex items-center gap-3">
+          <UserButton
+            appearance={{
+              elements: {
+                avatarBox: "h-9 w-9 ring-2 ring-primary/20 hover:ring-primary/40 transition-all"
+              }
+            }}
+          >
             {profileUrl && (
               <UserButton.MenuItems>
                 <UserButton.Link label="Profile" labelIcon={<ProfileIcon />} href={profileUrl} />
