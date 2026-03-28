@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { GitPullRequest, FolderKanban, CheckSquare, Clock, X, LayoutDashboard, Store, Receipt } from "lucide-react";
+import { GitPullRequest, FolderKanban, CheckSquare, Clock, X, LayoutDashboard, Store, Receipt, Search } from "lucide-react";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -12,6 +12,7 @@ interface SidebarProps {
 
 const freelancerLinks = [
   { href: "/freelancer/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/marketplace/clients", label: "Find Work", icon: Search },
   { href: "/freelancer/pipeline", label: "Pipeline", icon: GitPullRequest },
   { href: "/freelancer/projects", label: "Projects", icon: FolderKanban },
   { href: "/freelancer/tasks", label: "Tasks", icon: CheckSquare },
@@ -21,7 +22,7 @@ const freelancerLinks = [
 
 const clientLinks = [
   { href: "/client/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/marketplace", label: "Marketplace", icon: Store },
+  { href: "/marketplace", label: "Find Freelancers", icon: Search },
 ];
 
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
