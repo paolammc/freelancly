@@ -27,8 +27,8 @@ const clientLinks = [
 
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const pathname = usePathname();
-  const isClient = pathname.startsWith("/client");
-  const isFreelancer = pathname.startsWith("/freelancer");
+  const isClient = pathname.startsWith("/client") || pathname === "/marketplace";
+  const isFreelancer = pathname.startsWith("/freelancer") || pathname.startsWith("/marketplace/clients");
 
   const links = isClient ? clientLinks : isFreelancer ? freelancerLinks : [];
 
