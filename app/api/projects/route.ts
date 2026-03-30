@@ -77,13 +77,18 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
+    console.log("POST /api/projects - Received body:", JSON.stringify(body));
+    console.log("POST /api/projects - User:", { id: user.id, role: user.role });
+
     const { freelancerId, title, description, budget, deadline, meetingUrl } = body;
 
     // Validate required fields
     if (!title || typeof title !== "string" || title.trim() === "") {
+      console.log("POST /api/projects - Validation failed: title missing or invalid");
       return NextResponse.json({ error: "Project title is required" }, { status: 400 });
     }
     if (!description || typeof description !== "string" || description.trim() === "") {
+      console.log("POST /api/projects - Validation failed: description missing or invalid");
       return NextResponse.json({ error: "Project description is required" }, { status: 400 });
     }
 
@@ -148,6 +153,7 @@ export async function POST(req: Request) {
     return NextResponse.json(project);
   } catch (error) {
     console.error("Error creating project:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    return NextResponse.json({ error: `Internal server error: ${errorMessage}` }, { status: 500 });
   }
 }
