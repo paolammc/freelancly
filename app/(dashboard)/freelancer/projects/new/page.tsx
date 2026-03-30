@@ -40,11 +40,13 @@ export default function NewFreelancerProjectPage() {
         }),
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        throw new Error("Failed to create project");
+        throw new Error(data.error || "Failed to create project");
       }
 
-      const project = await response.json();
+      const project = data;
 
       toast({
         title: "Project created",
@@ -56,7 +58,7 @@ export default function NewFreelancerProjectPage() {
       console.error("Error creating project:", error);
       toast({
         title: "Error",
-        description: "Failed to create project. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to create project. Please try again.",
         variant: "destructive",
       });
     } finally {

@@ -79,6 +79,14 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { freelancerId, title, description, budget, deadline, meetingUrl } = body;
 
+    // Validate required fields
+    if (!title || typeof title !== "string" || title.trim() === "") {
+      return NextResponse.json({ error: "Project title is required" }, { status: 400 });
+    }
+    if (!description || typeof description !== "string" || description.trim() === "") {
+      return NextResponse.json({ error: "Project description is required" }, { status: 400 });
+    }
+
     // Freelancers can create their own projects (self-assigned)
     if (user.role === "freelancer") {
       const project = await db.project.create({
