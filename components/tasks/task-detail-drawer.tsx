@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   Sheet,
@@ -32,7 +32,9 @@ import {
   Calendar,
   Loader2,
   Trash2,
-  Save,
+  Check,
+  X,
+  Pencil,
   AlertCircle,
 } from "lucide-react";
 
@@ -91,15 +93,13 @@ export function TaskDetailDrawer({
   editable = true,
 }: TaskDetailDrawerProps) {
   const router = useRouter();
-  const [isEditing, setIsEditing] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [editingField, setEditingField] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   // Form state
   const [title, setTitle] = useState(task?.title || "");
   const [description, setDescription] = useState(task?.description || "");
-  const [status, setStatus] = useState<TaskStatus>(task?.status || "todo");
-  const [priority, setPriority] = useState<Priority>(task?.priority || "medium");
   const [tags, setTags] = useState<string[]>(task?.tags || []);
   const [estimatedHours, setEstimatedHours] = useState(
     task?.estimatedSeconds ? (task.estimatedSeconds / 3600).toString() : ""
@@ -109,22 +109,21 @@ export function TaskDetailDrawer({
   );
 
   // Reset form when task changes
-  const resetForm = () => {
+  useEffect(() => {
     if (task) {
       setTitle(task.title);
       setDescription(task.description || "");
-      setStatus(task.status);
-      setPriority(task.priority);
       setTags(task.tags);
       setEstimatedHours(
         task.estimatedSeconds ? (task.estimatedSeconds / 3600).toString() : ""
       );
       setDueDate(task.dueDate ? task.dueDate.split("T")[0] : "");
+      setEditingField(null);
     }
-    setIsEditing(false);
-  };
+  }, [task]);
 
-  const handleSave = async () => {
+  // Quick update for single field
+  const updateField = async (field: string, value: unknown) => {
     if (!task) return;
 
     setIsSaving(true);
@@ -132,27 +131,57 @@ export function TaskDetailDrawer({
       const response = await fetch(`/api/tasks/${task.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title,
-          description: description || null,
-          status,
-          priority,
-          tags,
-          estimatedSeconds: estimatedHours
-            ? Math.round(parseFloat(estimatedHours) * 3600)
-            : null,
-          dueDate: dueDate || null,
-        }),
+        body: JSON.stringify({ [field]: value }),
       });
 
       if (response.ok) {
-        setIsEditing(false);
         router.refresh();
       }
     } catch (error) {
-      console.error("Failed to update task:", error);
+      console.error(`Failed to update ${field}:`, error);
     } finally {
       setIsSaving(false);
+      setEditingField(null);
+    }
+  };
+
+  const handleSaveTitle = () => {
+    if (title.trim() && title !== task?.title) {
+      updateField("title", title.trim());
+    } else {
+      setTitle(task?.title || "");
+      setEditingField(null);
+    }
+  };
+
+  const handleSaveDescription = () => {
+    if (description !== task?.description) {
+      updateField("description", description || null);
+    }
+    setEditingField(null);
+  };
+
+  const handleSaveEstimatedTime = () => {
+    const seconds = estimatedHours
+      ? Math.round(parseFloat(estimatedHours) * 3600)
+      : null;
+    if (seconds !== task?.estimatedSeconds) {
+      updateField("estimatedSeconds", seconds);
+    }
+    setEditingField(null);
+  };
+
+  const handleSaveDueDate = () => {
+    if (dueDate !== (task?.dueDate?.split("T")[0] || "")) {
+      updateField("dueDate", dueDate || null);
+    }
+    setEditingField(null);
+  };
+
+  const handleSaveTags = (newTags: string[]) => {
+    setTags(newTags);
+    if (JSON.stringify(newTags) !== JSON.stringify(task?.tags)) {
+      updateField("tags", newTags);
     }
   };
 
@@ -190,34 +219,67 @@ export function TaskDetailDrawer({
     <Sheet open={open} onOpenChange={onClose}>
       <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
         <SheetHeader>
-          <div className="flex items-start justify-between pr-8">
-            <div className="space-y-1">
-              {isEditing ? (
+          <div className="pr-8">
+            {editingField === "title" ? (
+              <div className="flex items-center gap-2">
                 <Input
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   className="text-lg font-semibold"
+                  autoFocus
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") handleSaveTitle();
+                    if (e.key === "Escape") {
+                      setTitle(task.title);
+                      setEditingField(null);
+                    }
+                  }}
                 />
-              ) : (
-                <SheetTitle className="text-xl">{task.title}</SheetTitle>
-              )}
-              <SheetDescription>Task Details</SheetDescription>
-            </div>
+                <Button size="icon" variant="ghost" onClick={handleSaveTitle}>
+                  <Check className="h-4 w-4" />
+                </Button>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  onClick={() => {
+                    setTitle(task.title);
+                    setEditingField(null);
+                  }}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            ) : (
+              <SheetTitle
+                className="text-xl cursor-pointer hover:text-primary transition-colors group flex items-center gap-2"
+                onClick={() => editable && setEditingField("title")}
+              >
+                {task.title}
+                {editable && (
+                  <Pencil className="h-3 w-3 opacity-0 group-hover:opacity-50" />
+                )}
+              </SheetTitle>
+            )}
+            <SheetDescription>Task Details</SheetDescription>
           </div>
         </SheetHeader>
 
         <div className="mt-6 space-y-6">
-          {/* Status and Priority Row */}
-          <div className="flex flex-wrap gap-4">
-            <div className="space-y-1.5">
+          {/* Status and Priority - Responsive Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-2">
               <Label className="text-xs text-muted-foreground">Status</Label>
-              {isEditing ? (
-                <Select value={status} onValueChange={(v) => setStatus(v as TaskStatus)}>
-                  <SelectTrigger className="w-[140px]">
+              {editable ? (
+                <Select
+                  value={task.status}
+                  onValueChange={(v) => updateField("status", v)}
+                  disabled={isSaving}
+                >
+                  <SelectTrigger className="w-full">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="todo">Todo</SelectItem>
+                    <SelectItem value="todo">To Do</SelectItem>
                     <SelectItem value="in_progress">In Progress</SelectItem>
                     <SelectItem value="done">Done</SelectItem>
                   </SelectContent>
@@ -225,23 +287,27 @@ export function TaskDetailDrawer({
               ) : (
                 <Badge
                   variant={
-                    status === "done"
+                    task.status === "done"
                       ? "success"
-                      : status === "in_progress"
+                      : task.status === "in_progress"
                       ? "default"
                       : "secondary"
                   }
                 >
-                  {status.replace("_", " ")}
+                  {task.status.replace("_", " ")}
                 </Badge>
               )}
             </div>
 
-            <div className="space-y-1.5">
+            <div className="space-y-2">
               <Label className="text-xs text-muted-foreground">Priority</Label>
-              {isEditing ? (
-                <Select value={priority} onValueChange={(v) => setPriority(v as Priority)}>
-                  <SelectTrigger className="w-[140px]">
+              {editable ? (
+                <Select
+                  value={task.priority}
+                  onValueChange={(v) => updateField("priority", v)}
+                  disabled={isSaving}
+                >
+                  <SelectTrigger className="w-full">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -252,37 +318,60 @@ export function TaskDetailDrawer({
                   </SelectContent>
                 </Select>
               ) : (
-                <PriorityBadge priority={priority} showIcon />
+                <PriorityBadge priority={task.priority} showIcon />
               )}
             </div>
           </div>
 
           {/* Description */}
-          <div className="space-y-1.5">
+          <div className="space-y-2">
             <Label className="text-xs text-muted-foreground">Description</Label>
-            {isEditing ? (
-              <Textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Add a description..."
-                className="min-h-[100px]"
-              />
+            {editingField === "description" ? (
+              <div className="space-y-2">
+                <Textarea
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="Add a description..."
+                  className="min-h-[100px]"
+                  autoFocus
+                />
+                <div className="flex gap-2">
+                  <Button size="sm" onClick={handleSaveDescription}>
+                    Save
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      setDescription(task.description || "");
+                      setEditingField(null);
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
             ) : (
-              <p className="text-sm text-muted-foreground">
-                {task.description || "No description"}
+              <p
+                className={`text-sm cursor-pointer hover:bg-muted/50 rounded p-2 -mx-2 transition-colors ${
+                  task.description ? "" : "text-muted-foreground italic"
+                }`}
+                onClick={() => editable && setEditingField("description")}
+              >
+                {task.description || "Click to add description..."}
               </p>
             )}
           </div>
 
-          {/* Time and Due Date */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1.5">
+          {/* Estimated Time and Due Date - Responsive Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-2">
               <Label className="text-xs text-muted-foreground flex items-center gap-1">
                 <Clock className="h-3 w-3" />
                 Estimated Time
               </Label>
-              {isEditing ? (
-                <div className="flex items-center gap-1">
+              {editingField === "estimatedTime" ? (
+                <div className="flex items-center gap-2">
                   <Input
                     type="number"
                     step="0.5"
@@ -290,43 +379,109 @@ export function TaskDetailDrawer({
                     value={estimatedHours}
                     onChange={(e) => setEstimatedHours(e.target.value)}
                     className="w-20"
+                    autoFocus
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleSaveEstimatedTime();
+                      if (e.key === "Escape") {
+                        setEstimatedHours(
+                          task.estimatedSeconds
+                            ? (task.estimatedSeconds / 3600).toString()
+                            : ""
+                        );
+                        setEditingField(null);
+                      }
+                    }}
                   />
-                  <span className="text-sm text-muted-foreground">hours</span>
+                  <span className="text-sm text-muted-foreground">hrs</span>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    onClick={handleSaveEstimatedTime}
+                  >
+                    <Check className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    onClick={() => {
+                      setEstimatedHours(
+                        task.estimatedSeconds
+                          ? (task.estimatedSeconds / 3600).toString()
+                          : ""
+                      );
+                      setEditingField(null);
+                    }}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
                 </div>
               ) : (
-                <p className="text-sm">
+                <p
+                  className={`text-sm cursor-pointer hover:bg-muted/50 rounded p-2 -mx-2 transition-colors ${
+                    task.estimatedSeconds ? "" : "text-muted-foreground italic"
+                  }`}
+                  onClick={() => editable && setEditingField("estimatedTime")}
+                >
                   {task.estimatedSeconds
                     ? formatDuration(task.estimatedSeconds)
-                    : "Not set"}
+                    : "Click to set..."}
                 </p>
               )}
             </div>
 
-            <div className="space-y-1.5">
+            <div className="space-y-2">
               <Label className="text-xs text-muted-foreground flex items-center gap-1">
                 <Calendar className="h-3 w-3" />
                 Due Date
               </Label>
-              {isEditing ? (
-                <Input
-                  type="date"
-                  value={dueDate}
-                  onChange={(e) => setDueDate(e.target.value)}
-                />
+              {editingField === "dueDate" ? (
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="date"
+                    value={dueDate}
+                    onChange={(e) => setDueDate(e.target.value)}
+                    autoFocus
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleSaveDueDate();
+                      if (e.key === "Escape") {
+                        setDueDate(task.dueDate ? task.dueDate.split("T")[0] : "");
+                        setEditingField(null);
+                      }
+                    }}
+                  />
+                  <Button size="icon" variant="ghost" onClick={handleSaveDueDate}>
+                    <Check className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    onClick={() => {
+                      setDueDate(task.dueDate ? task.dueDate.split("T")[0] : "");
+                      setEditingField(null);
+                    }}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
               ) : (
-                <p className="text-sm">
+                <p
+                  className={`text-sm cursor-pointer hover:bg-muted/50 rounded p-2 -mx-2 transition-colors ${
+                    task.dueDate ? "" : "text-muted-foreground italic"
+                  }`}
+                  onClick={() => editable && setEditingField("dueDate")}
+                >
                   {task.dueDate
                     ? new Date(task.dueDate).toLocaleDateString()
-                    : "Not set"}
+                    : "Click to set..."}
                 </p>
               )}
             </div>
           </div>
 
           {/* Time Tracking Summary */}
-          <div className="space-y-1.5">
+          <div className="space-y-2">
             <Label className="text-xs text-muted-foreground">Time Tracked</Label>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <p className="text-sm font-medium">
                 {formatDuration(totalTimeTracked)}
               </p>
@@ -348,10 +503,10 @@ export function TaskDetailDrawer({
           </div>
 
           {/* Tags */}
-          <div className="space-y-1.5">
+          <div className="space-y-2">
             <Label className="text-xs text-muted-foreground">Tags</Label>
-            {isEditing ? (
-              <TagInput tags={tags} onTagsChange={setTags} />
+            {editable ? (
+              <TagInput tags={tags} onTagsChange={handleSaveTags} />
             ) : (
               <div className="flex flex-wrap gap-1">
                 {task.tags.length > 0 ? (
@@ -384,46 +539,23 @@ export function TaskDetailDrawer({
 
           <Separator />
 
-          {/* Actions */}
+          {/* Delete Action */}
           {editable && (
-            <div className="flex gap-2 pt-2">
-              {isEditing ? (
-                <>
-                  <Button
-                    variant="outline"
-                    onClick={resetForm}
-                    disabled={isSaving}
-                  >
-                    Cancel
-                  </Button>
-                  <Button onClick={handleSave} disabled={isSaving}>
-                    {isSaving ? (
-                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                    ) : (
-                      <Save className="h-4 w-4 mr-2" />
-                    )}
-                    Save Changes
-                  </Button>
-                </>
-              ) : (
-                <>
-                  <Button variant="outline" onClick={() => setIsEditing(true)}>
-                    Edit Task
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    onClick={handleDelete}
-                    disabled={isDeleting}
-                  >
-                    {isDeleting ? (
-                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                    ) : (
-                      <Trash2 className="h-4 w-4 mr-2" />
-                    )}
-                    Delete
-                  </Button>
-                </>
-              )}
+            <div className="pt-2">
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={handleDelete}
+                disabled={isDeleting}
+                className="w-full sm:w-auto"
+              >
+                {isDeleting ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                ) : (
+                  <Trash2 className="h-4 w-4 mr-2" />
+                )}
+                Delete Task
+              </Button>
             </div>
           )}
         </div>
