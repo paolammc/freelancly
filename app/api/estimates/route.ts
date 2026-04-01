@@ -120,7 +120,7 @@ export async function POST(req: Request) {
       data: {
         projectId,
         freelancerId: user.id,
-        clientId: project.clientId,
+        clientId: project.clientId ?? user.id, // Use freelancer as client if no client
         title,
         description,
         status: sendToClient ? "sent" : "draft",

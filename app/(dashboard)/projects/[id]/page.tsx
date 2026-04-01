@@ -190,7 +190,7 @@ export default async function ProjectDetailPage({
                   {(isClient
                     ? project.freelancer.freelancerProfile?.fullName ||
                       project.freelancer.email
-                    : project.client.email
+                    : project.client?.email || "S"
                   )
                     .charAt(0)
                     .toUpperCase()}
@@ -201,7 +201,7 @@ export default async function ProjectDetailPage({
                   {isClient
                     ? project.freelancer.freelancerProfile?.fullName ||
                       project.freelancer.email
-                    : project.client.email}
+                    : project.client?.email || "Solo project"}
                 </p>
                 {isClient && project.freelancer.freelancerProfile?.title && (
                   <p className="text-xs text-muted-foreground">

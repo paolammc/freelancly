@@ -375,7 +375,7 @@ export default async function FreelancerDashboardPage() {
                         </Badge>
                       </div>
                       <CardDescription className="line-clamp-1 text-xs md:text-sm">
-                        {project.client.email}
+                        {project.client?.email || "Solo project"}
                       </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
@@ -404,7 +404,7 @@ export default async function FreelancerDashboardPage() {
                         <div className="flex items-center gap-1.5">
                           {/* Client Avatar Placeholder */}
                           <div className="h-6 w-6 rounded-full bg-muted flex items-center justify-center text-xs font-medium">
-                            {project.client.email.charAt(0).toUpperCase()}
+                            {project.client?.email?.charAt(0)?.toUpperCase() || "S"}
                           </div>
                           <ArrowRight className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
                         </div>

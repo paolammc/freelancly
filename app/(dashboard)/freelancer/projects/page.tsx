@@ -97,7 +97,7 @@ export default async function ProjectsPage() {
                         {project.status}
                       </Badge>
                     </div>
-                    <CardDescription>Client: {project.client.email}</CardDescription>
+                    <CardDescription>{project.client ? `Client: ${project.client.email}` : "Solo project"}</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-2">

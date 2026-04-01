@@ -7,9 +7,33 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/components/ui/use-toast";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2, Users, User, TrendingUp } from "lucide-react";
 import Link from "next/link";
+
+type ProjectType = "client" | "solo" | "solo_invested";
+
+const projectTypes = [
+  {
+    value: "client" as ProjectType,
+    label: "Client Project",
+    description: "Working with a client on their project",
+    icon: Users,
+  },
+  {
+    value: "solo" as ProjectType,
+    label: "Solo Project",
+    description: "Personal or side project",
+    icon: User,
+  },
+  {
+    value: "solo_invested" as ProjectType,
+    label: "Solo with Investors",
+    description: "Personal project with investor backing",
+    icon: TrendingUp,
+  },
+];
 
 export default function NewFreelancerProjectPage() {
   const router = useRouter();
@@ -18,6 +42,7 @@ export default function NewFreelancerProjectPage() {
   const [formData, setFormData] = useState({
     title: "",
     description: "",
+    projectType: "solo" as ProjectType,
     budget: "",
     deadline: "",
     meetingUrl: "",
@@ -34,6 +59,7 @@ export default function NewFreelancerProjectPage() {
         body: JSON.stringify({
           title: formData.title,
           description: formData.description,
+          projectType: formData.projectType,
           budget: formData.budget ? parseFloat(formData.budget) : null,
           deadline: formData.deadline || null,
           meetingUrl: formData.meetingUrl || null,
@@ -92,6 +118,47 @@ export default function NewFreelancerProjectPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
+            {/* Project Type Selector */}
+            <div className="space-y-3">
+              <Label>Project Type *</Label>
+              <RadioGroup
+                value={formData.projectType}
+                onValueChange={(value) =>
+                  setFormData((prev) => ({ ...prev, projectType: value as ProjectType }))
+                }
+                className="grid grid-cols-1 sm:grid-cols-3 gap-3"
+              >
+                {projectTypes.map((type) => (
+                  <Label
+                    key={type.value}
+                    htmlFor={type.value}
+                    className={`flex flex-col items-center gap-2 rounded-lg border-2 p-4 cursor-pointer transition-all hover:border-primary/50 ${
+                      formData.projectType === type.value
+                        ? "border-primary bg-primary/5"
+                        : "border-muted"
+                    }`}
+                  >
+                    <RadioGroupItem
+                      value={type.value}
+                      id={type.value}
+                      className="sr-only"
+                    />
+                    <type.icon
+                      className={`h-6 w-6 ${
+                        formData.projectType === type.value
+                          ? "text-primary"
+                          : "text-muted-foreground"
+                      }`}
+                    />
+                    <span className="font-medium text-sm">{type.label}</span>
+                    <span className="text-xs text-muted-foreground text-center">
+                      {type.description}
+                    </span>
+                  </Label>
+                ))}
+              </RadioGroup>
+            </div>
+
             <div className="space-y-2">
               <Label htmlFor="title">Project Title *</Label>
               <Input

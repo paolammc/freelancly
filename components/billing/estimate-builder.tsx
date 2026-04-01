@@ -21,10 +21,10 @@ import { formatCurrency } from "@/lib/utils";
 interface Project {
   id: string;
   title: string;
-  clientId: string;
+  clientId: string | null;
   client: {
     email: string;
-  };
+  } | null;
 }
 
 interface EstimateBuilderProps {
@@ -149,7 +149,7 @@ export function EstimateBuilder({ projects, onSuccess }: EstimateBuilderProps) {
           </div>
         </div>
 
-        {selectedProject && (
+        {selectedProject && selectedProject.client && (
           <div className="text-sm text-muted-foreground">
             Client: {selectedProject.client.email}
           </div>

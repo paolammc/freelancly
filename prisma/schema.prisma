@@ -29,6 +29,12 @@ enum ProjectStatus {
   paused
 }
 
+enum ProjectType {
+  client        // Working with a client
+  solo          // Personal/side project
+  solo_invested // Solo project with investors
+}
+
 enum Priority {
   low
   medium
@@ -144,12 +150,13 @@ model FreelancerProfile {
 
 model Project {
   id           String        @id @default(uuid())
-  clientId     String
-  client       User          @relation("ClientProjects", fields: [clientId], references: [id], onDelete: Cascade)
+  clientId     String?
+  client       User?         @relation("ClientProjects", fields: [clientId], references: [id], onDelete: Cascade)
   freelancerId String
   freelancer   User          @relation("FreelancerProjects", fields: [freelancerId], references: [id], onDelete: Cascade)
   title        String
   description  String
+  projectType  ProjectType   @default(solo)
   budget       Decimal?      @db.Decimal(10, 2)
   deadline     DateTime?
   meetingUrl   String?

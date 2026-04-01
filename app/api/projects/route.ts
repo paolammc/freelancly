@@ -80,7 +80,7 @@ export async function POST(req: Request) {
     console.log("POST /api/projects - Received body:", JSON.stringify(body));
     console.log("POST /api/projects - User:", { id: user.id, role: user.role });
 
-    const { freelancerId, title, description, budget, deadline, meetingUrl } = body;
+    const { freelancerId, title, description, projectType, budget, deadline, meetingUrl } = body;
 
     // Validate required fields
     if (!title || typeof title !== "string" || title.trim() === "") {
@@ -92,14 +92,21 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Project description is required" }, { status: 400 });
     }
 
+    // Validate project type
+    const validProjectTypes = ["client", "solo", "solo_invested"];
+    const finalProjectType = validProjectTypes.includes(projectType) ? projectType : "solo";
+
     // Freelancers can create their own projects (self-assigned)
     if (user.role === "freelancer") {
       const project = await db.project.create({
         data: {
-          clientId: user.id, // Freelancer is also the "client" for self-projects
+          // For client projects, freelancer is both client and freelancer for now
+          // For solo projects, clientId is undefined (optional)
+          clientId: finalProjectType === "client" ? user.id : undefined,
           freelancerId: user.id,
           title,
           description,
+          projectType: finalProjectType,
           budget: budget || null,
           deadline: deadline ? new Date(deadline) : null,
           meetingUrl: meetingUrl || null,
@@ -136,6 +143,7 @@ export async function POST(req: Request) {
         freelancerId,
         title,
         description,
+        projectType: "client", // Client-created projects are always client type
         budget: budget || null,
         deadline: deadline ? new Date(deadline) : null,
         meetingUrl: meetingUrl || null,
