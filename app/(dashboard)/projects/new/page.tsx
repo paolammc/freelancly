@@ -25,6 +25,7 @@ function NewProjectForm() {
     title: "",
     description: "",
     budget: "",
+    startDate: "",
     deadline: "",
     meetingUrl: "",
   });
@@ -60,28 +61,29 @@ function NewProjectForm() {
           title: formData.title,
           description: formData.description,
           budget: formData.budget ? parseFloat(formData.budget) : null,
+          startDate: formData.startDate || null,
           deadline: formData.deadline || null,
           meetingUrl: formData.meetingUrl || null,
         }),
       });
 
-      if (!response.ok) {
-        throw new Error("Failed to create project");
-      }
+      const data = await response.json();
 
-      const project = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to create project");
+      }
 
       toast({
         title: "Project created",
         description: "Your project has been created successfully.",
       });
 
-      router.push(`/projects/${project.id}`);
+      router.push(`/projects/${data.id}`);
     } catch (error) {
       console.error("Error creating project:", error);
       toast({
         title: "Error",
-        description: "Failed to create project. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to create project. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -145,24 +147,36 @@ function NewProjectForm() {
             </p>
           </div>
 
+          <div className="space-y-2">
+            <Label htmlFor="budget">Budget (USD)</Label>
+            <Input
+              id="budget"
+              type="number"
+              min="0"
+              step="0.01"
+              value={formData.budget}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, budget: e.target.value }))
+              }
+              placeholder="5000"
+            />
+          </div>
+
           <div className="grid md:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <Label htmlFor="budget">Budget (USD)</Label>
+              <Label htmlFor="startDate">Start Date</Label>
               <Input
-                id="budget"
-                type="number"
-                min="0"
-                step="0.01"
-                value={formData.budget}
+                id="startDate"
+                type="date"
+                value={formData.startDate}
                 onChange={(e) =>
-                  setFormData((prev) => ({ ...prev, budget: e.target.value }))
+                  setFormData((prev) => ({ ...prev, startDate: e.target.value }))
                 }
-                placeholder="5000"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="deadline">Deadline</Label>
+              <Label htmlFor="deadline">End Date / Deadline</Label>
               <Input
                 id="deadline"
                 type="date"

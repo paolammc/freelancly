@@ -80,7 +80,7 @@ export async function POST(req: Request) {
     console.log("POST /api/projects - Received body:", JSON.stringify(body));
     console.log("POST /api/projects - User:", { id: user.id, role: user.role });
 
-    const { freelancerId, title, description, projectType, budget, deadline, meetingUrl } = body;
+    const { freelancerId, title, description, projectType, budget, startDate, deadline, meetingUrl } = body;
 
     // Validate required fields
     if (!title || typeof title !== "string" || title.trim() === "") {
@@ -108,6 +108,7 @@ export async function POST(req: Request) {
           description,
           projectType: finalProjectType,
           budget: budget || null,
+          startDate: startDate ? new Date(startDate) : null,
           deadline: deadline ? new Date(deadline) : null,
           meetingUrl: meetingUrl || null,
         },
@@ -126,15 +127,29 @@ export async function POST(req: Request) {
 
     // Clients create projects with freelancers
     if (user.role !== "client") {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+      console.log("POST /api/projects - User role is not client:", user.role);
+      return NextResponse.json({
+        error: "Only clients can create projects with freelancers. Please use the freelancer project form instead."
+      }, { status: 403 });
+    }
+
+    if (!freelancerId) {
+      console.log("POST /api/projects - No freelancerId provided for client");
+      return NextResponse.json({ error: "Please select a freelancer for your project" }, { status: 400 });
     }
 
     const freelancer = await db.user.findUnique({
       where: { id: freelancerId },
     });
 
-    if (!freelancer || freelancer.role !== "freelancer") {
-      return NextResponse.json({ error: "Invalid freelancer" }, { status: 400 });
+    if (!freelancer) {
+      console.log("POST /api/projects - Freelancer not found:", freelancerId);
+      return NextResponse.json({ error: "Freelancer not found. Please select a valid freelancer." }, { status: 400 });
+    }
+
+    if (freelancer.role !== "freelancer") {
+      console.log("POST /api/projects - Selected user is not a freelancer:", freelancer.role);
+      return NextResponse.json({ error: "Selected user is not a freelancer" }, { status: 400 });
     }
 
     const project = await db.project.create({
@@ -145,6 +160,7 @@ export async function POST(req: Request) {
         description,
         projectType: "client", // Client-created projects are always client type
         budget: budget || null,
+        startDate: startDate ? new Date(startDate) : null,
         deadline: deadline ? new Date(deadline) : null,
         meetingUrl: meetingUrl || null,
       },

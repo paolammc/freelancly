@@ -158,6 +158,7 @@ model Project {
   description  String
   projectType  ProjectType   @default(solo)
   budget       Decimal?      @db.Decimal(10, 2)
+  startDate    DateTime?
   deadline     DateTime?
   meetingUrl   String?
   status       ProjectStatus @default(active)
@@ -370,4 +371,38 @@ model Review {
   comment             String?
   createdAt           DateTime          @default(now())
   updatedAt           DateTime          @updatedAt
+}
+
+// ========================================
+// CLIENT INVITATIONS
+// ========================================
+
+model InviteToken {
+  id          String    @id @default(uuid())
+  email       String
+  projectId   String
+  token       String    @unique
+  expiresAt   DateTime
+  usedAt      DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([token])
+  @@index([email])
+}
+
+// ========================================
+// MESSAGING - Client-Freelancer Communication
+// ========================================
+
+model Message {
+  id          String   @id @default(uuid())
+  projectId   String
+  senderId    String
+  content     String
+  isRead      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([projectId])
+  @@index([senderId])
 }

@@ -13,6 +13,7 @@ import { GenerateTasksButton } from "@/components/projects/generate-tasks-button
 import { AddTaskForm } from "@/components/projects/add-task-form";
 import { TaskBoard } from "@/components/tasks/task-board";
 import { AIToolsPanel } from "@/components/projects/ai-tools-panel";
+import { InviteClientModal } from "@/components/projects/invite-client-modal";
 
 export default async function ProjectDetailPage({
   params,
@@ -156,17 +157,26 @@ export default async function ProjectDetailPage({
           <p className="text-muted-foreground max-w-2xl">{project.description}</p>
         </div>
 
-        {project.meetingUrl && (
-          <a
-            href={project.meetingUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
-          >
-            <Video className="h-4 w-4" />
-            Join Meeting
-          </a>
-        )}
+        <div className="flex items-center gap-2">
+          {isFreelancer && !project.clientId && (
+            <InviteClientModal
+              projectId={project.id}
+              projectTitle={project.title}
+              hasClient={!!project.clientId}
+            />
+          )}
+          {project.meetingUrl && (
+            <a
+              href={project.meetingUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
+            >
+              <Video className="h-4 w-4" />
+              Join Meeting
+            </a>
+          )}
+        </div>
       </div>
 
       <div className="grid gap-6 md:grid-cols-4">
@@ -229,16 +239,27 @@ export default async function ProjectDetailPage({
           </Card>
         )}
 
-        {project.deadline && (
+        {(project.startDate || project.deadline) && (
           <Card>
             <CardHeader className="pb-2">
               <CardDescription className="flex items-center gap-1">
                 <Calendar className="h-3 w-3" />
-                Deadline
+                Timeline
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              <p className="text-xl font-bold">{formatDate(project.deadline)}</p>
+            <CardContent className="space-y-1">
+              {project.startDate && (
+                <p className="text-sm">
+                  <span className="text-muted-foreground">Start:</span>{" "}
+                  <span className="font-medium">{formatDate(project.startDate)}</span>
+                </p>
+              )}
+              {project.deadline && (
+                <p className="text-sm">
+                  <span className="text-muted-foreground">End:</span>{" "}
+                  <span className="font-medium">{formatDate(project.deadline)}</span>
+                </p>
+              )}
             </CardContent>
           </Card>
         )}

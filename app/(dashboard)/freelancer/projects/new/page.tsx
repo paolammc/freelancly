@@ -44,6 +44,7 @@ export default function NewFreelancerProjectPage() {
     description: "",
     projectType: "solo" as ProjectType,
     budget: "",
+    startDate: "",
     deadline: "",
     meetingUrl: "",
   });
@@ -61,6 +62,7 @@ export default function NewFreelancerProjectPage() {
           description: formData.description,
           projectType: formData.projectType,
           budget: formData.budget ? parseFloat(formData.budget) : null,
+          startDate: formData.startDate || null,
           deadline: formData.deadline || null,
           meetingUrl: formData.meetingUrl || null,
         }),
@@ -189,24 +191,36 @@ export default function NewFreelancerProjectPage() {
               </p>
             </div>
 
+            <div className="space-y-2">
+              <Label htmlFor="budget">Budget (USD)</Label>
+              <Input
+                id="budget"
+                type="number"
+                min="0"
+                step="0.01"
+                value={formData.budget}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, budget: e.target.value }))
+                }
+                placeholder="5000"
+              />
+            </div>
+
             <div className="grid md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <Label htmlFor="budget">Budget (USD)</Label>
+                <Label htmlFor="startDate">Start Date</Label>
                 <Input
-                  id="budget"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={formData.budget}
+                  id="startDate"
+                  type="date"
+                  value={formData.startDate}
                   onChange={(e) =>
-                    setFormData((prev) => ({ ...prev, budget: e.target.value }))
+                    setFormData((prev) => ({ ...prev, startDate: e.target.value }))
                   }
-                  placeholder="5000"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="deadline">Deadline</Label>
+                <Label htmlFor="deadline">End Date / Deadline</Label>
                 <Input
                   id="deadline"
                   type="date"
