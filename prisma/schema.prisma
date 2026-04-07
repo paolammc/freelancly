@@ -116,16 +116,19 @@ model User {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  freelancerProfile  FreelancerProfile?
-  clientProjects     Project[]       @relation("ClientProjects")
-  freelancerProjects Project[]       @relation("FreelancerProjects")
-  assignedTasks      Task[]
-  timeEntries        TimeEntry[]
-  comments           Comment[]
-  estimates          Estimate[]      @relation("FreelancerEstimates")
-  clientEstimates    Estimate[]      @relation("ClientEstimates")
-  payments           Payment[]
-  clientListings     ClientListing[]
+  freelancerProfile   FreelancerProfile?
+  clientProjects      Project[]          @relation("ClientProjects")
+  freelancerProjects  Project[]          @relation("FreelancerProjects")
+  assignedTasks       Task[]
+  timeEntries         TimeEntry[]
+  comments            Comment[]
+  estimates           Estimate[]         @relation("FreelancerEstimates")
+  clientEstimates     Estimate[]         @relation("ClientEstimates")
+  payments            Payment[]
+  clientListings      ClientListing[]
+  clientProposals     ProjectProposal[]  @relation("ClientProposals")
+  freelancerProposals ProjectProposal[]  @relation("FreelancerProposals")
+  notifications       Notification[]
 }
 
 model FreelancerProfile {
@@ -169,6 +172,7 @@ model Project {
   estimates Estimate[]
   roadmaps  Roadmap[]
   prds      PRD[]
+  proposal  ProjectProposal?
 }
 
 model Task {
@@ -405,4 +409,61 @@ model Message {
 
   @@index([projectId])
   @@index([senderId])
+}
+
+// ========================================
+// PROJECT PROPOSALS - Client → Freelancer Workflow
+// ========================================
+
+enum ProposalStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  WITHDRAWN
+}
+
+model ProjectProposal {
+  id            String         @id @default(cuid())
+  title         String
+  description   String
+  budgetMin     Float?
+  budgetMax     Float?
+  timeline      String?        // e.g. "2 weeks", "1 month"
+  scopeNotes    String?        // Additional scope details
+  status        ProposalStatus @default(PENDING)
+  declineReason String?        // Optional message from freelancer when declining
+
+  clientId      String
+  client        User           @relation("ClientProposals", fields: [clientId], references: [id], onDelete: Cascade)
+
+  freelancerId  String
+  freelancer    User           @relation("FreelancerProposals", fields: [freelancerId], references: [id], onDelete: Cascade)
+
+  projectId     String?        @unique
+  project       Project?       @relation(fields: [projectId], references: [id], onDelete: SetNull)
+
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  @@index([clientId])
+  @@index([freelancerId])
+  @@index([status])
+}
+
+// ========================================
+// NOTIFICATIONS - In-App Notifications
+// ========================================
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String   // e.g. "PROPOSAL_RECEIVED", "PROPOSAL_ACCEPTED", "PROPOSAL_DECLINED"
+  message   String
+  read      Boolean  @default(false)
+  linkTo    String?  // e.g. "/proposals/[id]"
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([read])
 }

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { GitPullRequest, FolderKanban, CheckSquare, Clock, X, LayoutDashboard, Store, Receipt, Search, FileText, MessageSquare } from "lucide-react";
+import { GitPullRequest, FolderKanban, CheckSquare, Clock, X, LayoutDashboard, Store, Receipt, Search, FileText, MessageSquare, Send, Inbox } from "lucide-react";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -12,6 +12,7 @@ interface SidebarProps {
 
 const freelancerLinks = [
   { href: "/freelancer/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/inbox/proposals", label: "Proposals", icon: Inbox },
   { href: "/marketplace/clients", label: "Find Work", icon: Search },
   { href: "/freelancer/pipeline", label: "Pipeline", icon: GitPullRequest },
   { href: "/freelancer/projects", label: "Projects", icon: FolderKanban },
@@ -22,6 +23,7 @@ const freelancerLinks = [
 
 const clientLinks = [
   { href: "/client/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/proposals", label: "Proposals", icon: Send },
   { href: "/client/estimates", label: "Estimates", icon: FileText },
   { href: "/client/inbox", label: "Inbox", icon: MessageSquare },
   { href: "/marketplace", label: "Find Freelancers", icon: Search },
@@ -29,8 +31,8 @@ const clientLinks = [
 
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const pathname = usePathname();
-  const isClient = pathname.startsWith("/client") || pathname === "/marketplace";
-  const isFreelancer = pathname.startsWith("/freelancer") || pathname.startsWith("/marketplace/clients");
+  const isClient = pathname.startsWith("/client") || pathname === "/marketplace" || pathname.startsWith("/proposals");
+  const isFreelancer = pathname.startsWith("/freelancer") || pathname.startsWith("/marketplace/clients") || pathname.startsWith("/inbox/proposals");
 
   const links = isClient ? clientLinks : isFreelancer ? freelancerLinks : [];
 

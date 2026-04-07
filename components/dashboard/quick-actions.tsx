@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { FolderPlus, ListPlus, Timer, Command } from "lucide-react";
+import { Inbox, ListPlus, Timer, Command } from "lucide-react";
 
 interface QuickActionsProps {
   hasProjects: boolean;
@@ -21,12 +21,12 @@ export function QuickActions({ hasProjects }: QuickActionsProps) {
 
   return (
     <div className="flex items-center gap-2 overflow-x-auto pb-1 -mx-1 px-1">
-      {/* New Project */}
-      <Link href="/freelancer/projects/new">
+      {/* Review Proposals */}
+      <Link href="/inbox/proposals">
         <Button variant="outline" size="sm" className="gap-2 whitespace-nowrap">
-          <FolderPlus className="h-4 w-4" />
-          <span className="hidden sm:inline">New Project</span>
-          <span className="sm:hidden">Project</span>
+          <Inbox className="h-4 w-4" />
+          <span className="hidden sm:inline">Proposals</span>
+          <span className="sm:hidden">Inbox</span>
         </Button>
       </Link>
 

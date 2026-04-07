@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/dashboard/progress";
-import { FolderKanban, Plus } from "lucide-react";
+import { FolderKanban, Inbox, ArrowRight } from "lucide-react";
 import Link from "next/link";
 
 export default async function ProjectsPage() {
@@ -33,8 +33,21 @@ export default async function ProjectsPage() {
           status: true,
         },
       },
+      proposal: {
+        select: {
+          id: true,
+        },
+      },
     },
     orderBy: { createdAt: "desc" },
+  });
+
+  // Get pending proposals count
+  const pendingProposalsCount = await db.projectProposal.count({
+    where: {
+      freelancerId: user.id,
+      status: "PENDING",
+    },
   });
 
   return (
@@ -46,12 +59,15 @@ export default async function ProjectsPage() {
             Manage your active and completed projects
           </p>
         </div>
-        <Link href="/freelancer/projects/new">
-          <Button className="gap-2">
-            <Plus className="h-4 w-4" />
-            New Project
-          </Button>
-        </Link>
+        {pendingProposalsCount > 0 && (
+          <Link href="/inbox/proposals">
+            <Button className="gap-2">
+              <Inbox className="h-4 w-4" />
+              {pendingProposalsCount} Pending Proposal{pendingProposalsCount !== 1 ? "s" : ""}
+              <ArrowRight className="h-4 w-4" />
+            </Button>
+          </Link>
+        )}
       </div>
 
       {projects.length === 0 ? (
@@ -62,12 +78,15 @@ export default async function ProjectsPage() {
             </div>
             <h3 className="font-semibold text-lg mb-1">No projects yet</h3>
             <p className="text-muted-foreground text-center max-w-sm mb-6">
-              Create your first project to start organizing your work and tracking tasks.
+              Projects are created when you accept a proposal from a client.
+              {pendingProposalsCount > 0
+                ? ` You have ${pendingProposalsCount} pending proposal${pendingProposalsCount !== 1 ? "s" : ""} to review.`
+                : " Check your inbox for new proposals."}
             </p>
-            <Link href="/freelancer/projects/new">
+            <Link href="/inbox/proposals">
               <Button className="gap-2">
-                <Plus className="h-4 w-4" />
-                Create Your First Project
+                <Inbox className="h-4 w-4" />
+                {pendingProposalsCount > 0 ? "Review Proposals" : "View Inbox"}
               </Button>
             </Link>
           </CardContent>
@@ -85,17 +104,24 @@ export default async function ProjectsPage() {
                   <CardHeader>
                     <div className="flex items-center justify-between">
                       <CardTitle className="text-lg">{project.title}</CardTitle>
-                      <Badge
-                        variant={
-                          project.status === "active"
-                            ? "default"
-                            : project.status === "completed"
-                            ? "success"
-                            : "secondary"
-                        }
-                      >
-                        {project.status}
-                      </Badge>
+                      <div className="flex items-center gap-2">
+                        {project.proposal && (
+                          <Badge variant="outline" className="text-violet-600 border-violet-300">
+                            From Proposal
+                          </Badge>
+                        )}
+                        <Badge
+                          variant={
+                            project.status === "active"
+                              ? "default"
+                              : project.status === "completed"
+                              ? "success"
+                              : "secondary"
+                          }
+                        >
+                          {project.status}
+                        </Badge>
+                      </div>
                     </div>
                     <CardDescription>{project.client ? `Client: ${project.client.email}` : "Solo project"}</CardDescription>
                   </CardHeader>

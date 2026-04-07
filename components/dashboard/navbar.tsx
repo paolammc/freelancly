@@ -4,6 +4,7 @@ import Link from "next/link";
 import { UserButton } from "@clerk/nextjs";
 import { usePathname } from "next/navigation";
 import { Menu, Zap } from "lucide-react";
+import { NotificationBell } from "@/components/notifications/NotificationBell";
 
 interface NavbarProps {
   onMenuClick: () => void;
@@ -38,7 +39,8 @@ export function Navbar({ onMenuClick }: NavbarProps) {
           </Link>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
+          <NotificationBell />
           <UserButton
             appearance={{
               elements: {

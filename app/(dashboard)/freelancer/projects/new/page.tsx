@@ -9,18 +9,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/components/ui/use-toast";
-import { ArrowLeft, Loader2, Users, User, TrendingUp } from "lucide-react";
+import { ArrowLeft, Loader2, User, TrendingUp } from "lucide-react";
 import Link from "next/link";
 
-type ProjectType = "client" | "solo" | "solo_invested";
+type ProjectType = "solo" | "solo_invested";
 
 const projectTypes = [
-  {
-    value: "client" as ProjectType,
-    label: "Client Project",
-    description: "Working with a client on their project",
-    icon: Users,
-  },
   {
     value: "solo" as ProjectType,
     label: "Solo Project",
@@ -105,9 +99,13 @@ export default function NewFreelancerProjectPage() {
       </Link>
 
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Create New Project</h1>
+        <h1 className="text-3xl font-bold tracking-tight">Create Personal Project</h1>
         <p className="text-muted-foreground">
-          Create a project to organize your work and track tasks
+          Create a solo project to organize your personal work. For client projects, accept a proposal from your{" "}
+          <Link href="/inbox/proposals" className="text-primary hover:underline">
+            inbox
+          </Link>
+          .
         </p>
       </div>
 

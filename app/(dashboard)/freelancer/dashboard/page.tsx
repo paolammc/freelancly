@@ -23,6 +23,7 @@ import {
   CheckCircle2,
   Circle,
   X,
+  Inbox,
 } from "lucide-react";
 import { OnboardingChecklist } from "@/components/dashboard/onboarding-checklist";
 import { QuickActions } from "@/components/dashboard/quick-actions";
@@ -89,6 +90,25 @@ export default async function FreelancerDashboardPage() {
     },
     orderBy: { createdAt: "desc" },
   });
+
+  // Fetch pending proposals
+  const pendingProposals = await db.projectProposal.findMany({
+    where: {
+      freelancerId: user.id,
+      status: "PENDING",
+    },
+    include: {
+      client: {
+        select: {
+          email: true,
+        },
+      },
+    },
+    orderBy: { createdAt: "desc" },
+    take: 3,
+  });
+
+  const pendingProposalsCount = pendingProposals.length;
 
   // Calculate stats
   const totalTimeSeconds = timeEntries.reduce((acc, entry) => acc + entry.durationSeconds, 0);
@@ -292,6 +312,60 @@ export default async function FreelancerDashboardPage() {
       </div>
 
       {/* ========================================
+          NEW PROPOSALS WIDGET
+          Shows pending proposals from clients
+          ======================================== */}
+      {pendingProposalsCount > 0 && (
+        <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <Inbox className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <CardTitle className="text-base">New Proposals</CardTitle>
+                  <CardDescription className="text-xs">
+                    {pendingProposalsCount} pending {pendingProposalsCount === 1 ? "proposal" : "proposals"} from clients
+                  </CardDescription>
+                </div>
+              </div>
+              <Link href="/inbox/proposals">
+                <Button size="sm" className="gap-1">
+                  Review
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </Link>
+            </div>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <div className="space-y-2">
+              {pendingProposals.map((proposal) => (
+                <Link
+                  key={proposal.id}
+                  href="/inbox/proposals"
+                  className="flex items-center justify-between p-3 rounded-lg bg-background/60 hover:bg-background transition-colors group"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center text-xs font-medium shrink-0">
+                      {proposal.client?.email?.charAt(0)?.toUpperCase() || "C"}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium truncate">{proposal.title}</p>
+                      <p className="text-xs text-muted-foreground truncate">
+                        From {proposal.client?.email || "Client"}
+                      </p>
+                    </div>
+                  </div>
+                  <ArrowRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                </Link>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* ========================================
           PROJECTS SECTION
           - Taller progress bars
           - Full width on desktop
@@ -304,15 +378,15 @@ export default async function FreelancerDashboardPage() {
             <p className="text-xs md:text-sm text-muted-foreground">Manage and track your work</p>
           </div>
           <div className="flex items-center gap-2">
-            <Link href="/freelancer/projects/new">
-              <Button size="sm" className="gap-2 hidden md:flex">
-                <Plus className="h-4 w-4" />
-                New Project
-              </Button>
-              <Button size="sm" className="md:hidden h-8 w-8 p-0">
-                <Plus className="h-4 w-4" />
-              </Button>
-            </Link>
+            {pendingProposalsCount > 0 && (
+              <Link href="/inbox/proposals">
+                <Button size="sm" variant="outline" className="gap-2">
+                  <Inbox className="h-4 w-4" />
+                  <span className="hidden md:inline">{pendingProposalsCount} Pending</span>
+                  <span className="md:hidden">{pendingProposalsCount}</span>
+                </Button>
+              </Link>
+            )}
             {projects.length > 0 && (
               <Link href="/freelancer/projects">
                 <Button variant="ghost" size="sm" className="text-primary hidden md:flex">
@@ -332,12 +406,14 @@ export default async function FreelancerDashboardPage() {
               </div>
               <h3 className="font-semibold text-base md:text-lg mb-1">No projects yet</h3>
               <p className="text-muted-foreground text-center text-sm max-w-sm mb-6">
-                Create your first project to start organizing your work.
+                {pendingProposalsCount > 0
+                  ? `You have ${pendingProposalsCount} pending proposal${pendingProposalsCount !== 1 ? "s" : ""} from clients. Accept a proposal to start your first project.`
+                  : "Projects are created when you accept proposals from clients. Check your inbox for new opportunities."}
               </p>
-              <Link href="/freelancer/projects/new">
+              <Link href="/inbox/proposals">
                 <Button className="gap-2">
-                  <Plus className="h-4 w-4" />
-                  Create Project
+                  <Inbox className="h-4 w-4" />
+                  {pendingProposalsCount > 0 ? "Review Proposals" : "View Inbox"}
                 </Button>
               </Link>
             </CardContent>

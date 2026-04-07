@@ -17,6 +17,7 @@ import {
   FileText,
   MessageSquare,
   Sparkles,
+  Send,
 } from "lucide-react";
 
 export default async function ClientDashboardPage() {
@@ -79,6 +80,28 @@ export default async function ClientDashboardPage() {
     return acc + project.estimates.filter((e) => e.status === "sent").length;
   }, 0);
 
+  // Get client's sent proposals
+  const proposals = await db.projectProposal.findMany({
+    where: { clientId: user.id },
+    include: {
+      freelancer: {
+        select: {
+          email: true,
+          freelancerProfile: {
+            select: {
+              fullName: true,
+            },
+          },
+        },
+      },
+    },
+    orderBy: { createdAt: "desc" },
+    take: 5,
+  });
+
+  const pendingProposals = proposals.filter((p) => p.status === "PENDING").length;
+  const acceptedProposals = proposals.filter((p) => p.status === "ACCEPTED").length;
+
   const totalProjects = projects.length;
   const activeProjects = projects.filter((p) => p.status === "active").length;
   const completedProjects = projects.filter((p) => p.status === "completed").length;
@@ -134,6 +157,70 @@ export default async function ClientDashboardPage() {
         hasViewedEstimate={hasViewedEstimate}
         hasSentMessage={false} // Will be tracked via localStorage
       />
+
+      {/* Proposals Widget */}
+      {proposals.length > 0 && (
+        <Card className="border-violet-200/50 bg-gradient-to-br from-violet-500/5 to-purple-500/10">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="h-9 w-9 rounded-lg bg-violet-500/10 flex items-center justify-center">
+                  <Send className="h-5 w-5 text-violet-600" />
+                </div>
+                <div>
+                  <CardTitle className="text-base">Your Proposals</CardTitle>
+                  <CardDescription className="text-xs">
+                    {pendingProposals} pending, {acceptedProposals} accepted
+                  </CardDescription>
+                </div>
+              </div>
+              <Link href="/proposals">
+                <Button size="sm" variant="outline" className="gap-1">
+                  View All
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </Link>
+            </div>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <div className="space-y-2">
+              {proposals.slice(0, 3).map((proposal) => (
+                <Link
+                  key={proposal.id}
+                  href={`/proposals/${proposal.id}`}
+                  className="flex items-center justify-between p-3 rounded-lg bg-background/60 hover:bg-background transition-colors group"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center text-xs font-medium shrink-0">
+                      {(proposal.freelancer?.freelancerProfile?.fullName || proposal.freelancer?.email || "F").charAt(0).toUpperCase()}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium truncate">{proposal.title}</p>
+                      <p className="text-xs text-muted-foreground truncate">
+                        To {proposal.freelancer?.freelancerProfile?.fullName || proposal.freelancer?.email}
+                      </p>
+                    </div>
+                  </div>
+                  <Badge
+                    variant={
+                      proposal.status === "PENDING"
+                        ? "outline"
+                        : proposal.status === "ACCEPTED"
+                        ? "success"
+                        : proposal.status === "DECLINED"
+                        ? "destructive"
+                        : "secondary"
+                    }
+                    className="shrink-0"
+                  >
+                    {proposal.status.toLowerCase()}
+                  </Badge>
+                </Link>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Quick Actions */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
