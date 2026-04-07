@@ -66,14 +66,22 @@ export default async function ClientDashboardPage() {
     orderBy: { createdAt: "desc" },
   });
 
-  // Get unread message count
-  const unreadMessages = await db.message.count({
-    where: {
-      projectId: { in: projects.map((p) => p.id) },
-      senderId: { not: user.id },
-      isRead: false,
-    },
-  });
+  // Get unread message count (safely handle if no projects or Message model issues)
+  let unreadMessages = 0;
+  try {
+    if (projects.length > 0) {
+      unreadMessages = await db.message.count({
+        where: {
+          projectId: { in: projects.map((p) => p.id) },
+          senderId: { not: user.id },
+          isRead: false,
+        },
+      });
+    }
+  } catch {
+    // Message model might not be available, ignore
+    unreadMessages = 0;
+  }
 
   // Get pending estimates
   const pendingEstimates = projects.reduce((acc, project) => {
@@ -184,7 +192,9 @@ export default async function ClientDashboardPage() {
           </CardHeader>
           <CardContent className="pt-0">
             <div className="space-y-2">
-              {proposals.slice(0, 3).map((proposal) => (
+              {proposals.slice(0, 3).map((proposal) => {
+                const freelancerName = proposal.freelancer?.freelancerProfile?.fullName || proposal.freelancer?.email || "Freelancer";
+                return (
                 <Link
                   key={proposal.id}
                   href={`/proposals/${proposal.id}`}
@@ -192,12 +202,12 @@ export default async function ClientDashboardPage() {
                 >
                   <div className="flex items-center gap-3 min-w-0">
                     <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center text-xs font-medium shrink-0">
-                      {(proposal.freelancer?.freelancerProfile?.fullName || proposal.freelancer?.email || "F").charAt(0).toUpperCase()}
+                      {freelancerName.charAt(0).toUpperCase()}
                     </div>
                     <div className="min-w-0">
                       <p className="text-sm font-medium truncate">{proposal.title}</p>
                       <p className="text-xs text-muted-foreground truncate">
-                        To {proposal.freelancer?.freelancerProfile?.fullName || proposal.freelancer?.email}
+                        To {freelancerName}
                       </p>
                     </div>
                   </div>
@@ -216,7 +226,8 @@ export default async function ClientDashboardPage() {
                     {proposal.status.toLowerCase()}
                   </Badge>
                 </Link>
-              ))}
+              );
+              })}
             </div>
           </CardContent>
         </Card>
@@ -320,6 +331,7 @@ export default async function ClientDashboardPage() {
               const hasPendingEstimate = project.estimates.some(
                 (e) => e.status === "sent"
               );
+              const freelancerDisplayName = project.freelancer?.freelancerProfile?.fullName || project.freelancer?.email || "Freelancer";
 
               return (
                 <Link key={project.id} href={`/projects/${project.id}`}>
@@ -334,22 +346,16 @@ export default async function ClientDashboardPage() {
                             <Avatar className="h-5 w-5">
                               <AvatarImage
                                 src={
-                                  project.freelancer.freelancerProfile?.avatarUrl ||
+                                  project.freelancer?.freelancerProfile?.avatarUrl ||
                                   undefined
                                 }
                               />
                               <AvatarFallback className="text-xs">
-                                {(
-                                  project.freelancer.freelancerProfile?.fullName ||
-                                  project.freelancer.email
-                                )
-                                  .charAt(0)
-                                  .toUpperCase()}
+                                {freelancerDisplayName.charAt(0).toUpperCase()}
                               </AvatarFallback>
                             </Avatar>
                             <span className="truncate">
-                              {project.freelancer.freelancerProfile?.fullName ||
-                                project.freelancer.email}
+                              {freelancerDisplayName}
                             </span>
                           </CardDescription>
                         </div>
