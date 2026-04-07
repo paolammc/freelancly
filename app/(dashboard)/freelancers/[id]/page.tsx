@@ -94,8 +94,8 @@ export default async function FreelancerDetailPage({
                 <span className="text-sm font-normal text-muted-foreground">/hr</span>
               </div>
               {isClient && (
-                <Link href={`/projects/new?freelancerId=${freelancer.id}`}>
-                  <Button className="mt-4">Start a Project</Button>
+                <Link href={`/proposals/new?freelancerId=${freelancer.id}`}>
+                  <Button className="mt-4">Send Proposal</Button>
                 </Link>
               )}
             </div>
